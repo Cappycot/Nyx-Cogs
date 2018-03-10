@@ -88,5 +88,10 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# scp cog files
+# PyCharm files:
+dictionaries/
+.idea/
+
+# scp cog files:
 scp/titles.txt
+
