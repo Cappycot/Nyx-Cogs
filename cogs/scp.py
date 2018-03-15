@@ -2,6 +2,11 @@
 Secure, Contain, Protect
 
 This module requires Beautiful Soup 4.X.X and PIL 4.X.X to run!
+
+TODO: Change titling system to fetch and cache title rather than preload it.
+    - That way we can update 404 [ACCESS DENIED] entries as they are asked for.
+TODO: Manually enter information for all of djkaktus' skips.
+    - djkaktus uses a formatted picture for object class, etc.
 """
 
 from io import BytesIO
@@ -85,6 +90,7 @@ def scp_2956(embed: Embed):
 def scp_3942(embed: Embed):
     embed.description = "UNDEFINED"
     embed.title = "UNDEFINED"
+
 
 hard_code_specials = {"SCP-2521": scp_2521, "SCP-2602": scp_2602,
                       "SCP-2565": scp_2565, "SCP-2769": scp_61231,
@@ -227,7 +233,7 @@ async def parse_scp(ctx, number: str, post_image=False):
                 for sibling in object_class.next_element.next_siblings:
                     if sibling is not None:
                         if isinstance(sibling, Tag) and \
-                                        sibling.next_element is not None:
+                                sibling.next_element is not None:
                             element = sibling.next_element.strip(": ")
                             classes.append("~~" + element + "~~")
                         elif sibling.strip():
