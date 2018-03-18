@@ -129,6 +129,7 @@ class Factorial:
     @commands.command()
     async def factorial(self, ctx, number: int):
         """Calculates the factorial of a given number."""
+        # TODO: Write out the respond code here so this cog doesn't need nyx.
         await respond(ctx, "".join([str(number), get_factorial(["", number])]))
 
 
