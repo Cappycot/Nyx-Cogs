@@ -2,16 +2,10 @@
 Secure, Contain, Protect
 
 This module requires Beautiful Soup 4.X.X and PIL 4.X.X to run!
-
-TODO: Change titling system to fetch and cache title rather than preload it.
-    - That way we can update 404 [ACCESS DENIED] entries as they are asked for.
-TODO: Manually enter information for all of djkaktus' skips.
-    - djkaktus uses a formatted picture for object class, etc.
 """
 
 from io import BytesIO
-from os import mkdir
-from os.path import isdir, join
+from os.path import join
 from re import compile, search
 
 from PIL import Image, ImageDraw, ImageFont
@@ -23,31 +17,131 @@ from discord.ext.commands import BucketType
 
 # Name of the directory to be used to store things...
 folder = "scp"
-titles_file = "titles.txt"
-# SCP series 4 is the most current...
-highest_scp = 3999
-series_range = (highest_scp + 1) // 1000
-# SCPs range from 001 to 3999...
-titles = {(i + 1): None for i in range(highest_scp)}
+# Hard-coded object classes for SCPs that have their object classes in images.
+# e.g. some of djkaktus' more prominent SCPs have special header images.
+c_580 = "(~~Keter~~) Due to a review of current documentation as of January " \
+        "5, 2009, this SCP has been reclassified as Euclid."
+c_2718 = "``Catastrophic abort at D09E2AD9: HANDLE_NOT_FOUND``"
+object_classes = {580: c_580, 1254: "~~Neutralized~~ Euclid",
+                  1730: "Neutralized", 1848: "~~Euclid~~ Safe",
+                  2062: "Kronecker", 2161: "Euclid",
+                  2212: " [MASSIVE DATABASE CORRUPTION]", 2237: "[WITHHELD]",
+                  2254: "Realität-Brecher", 2316: "Keter", 2718: c_2718,
+                  2845: "Keter", 2935: "Keter", 3000: "Thaumiel",
+                  3125: "Keter", 3301: "Safe", 3340: "Keter", 3521: "Safe",
+                  3785: "Euclid", 3813: "Keter", 3933: "Euclid",
+                  3935: "Euclid"}
+# Description titles are cached, but may require resetting from time to time.
+# These SCPs need embed descriptions manually entered at the moment:
+# 2565
+# 2769
+# 2864
+# 2930
+# 3942
+hard_code_descriptions = {2565: "Allison Eckhart", 2769: "An Honest Buck",
+                          2864: "Di Molte Voci",
+                          2930: "Cross City City City City Hall",
+                          3942: "``UNDEFINED``"}
+# Make command that cleans description cache maybe?
+descriptions = hard_code_descriptions.copy()
+
+
+# Put SCPs that have format screws or special meta properties here...
+# e.g. The haiku rice bowl.
+
+
+def scp_732(embed: Embed):
+    """lmao"""
+    embed.colour = Color.red()
+    embed.set_field_at(0, name="Object Class:",
+                       value="Ke@#%^ SUPR1337KETER!!!!!!1!!!1!111!!#$%^")
+
+
+def scp_931(embed: Embed):
+    """Man did I have fun with this one lol."""
+    n = "Its Item Number"
+    v = "Is SCP Nine Three One;\n**Object Class** is Safe."
+    embed.set_field_at(0, name=n, value=v)
+    n = "Heed these Procedures,"
+    v = """
+To keep the item secure—
+**Special Containment**.
+
+Effects are triggered
+By some images of it—
+Depends on angle.
+
+Writing about it
+Will always be affected,
+Despite ignorance.
+"""
+    embed.set_field_at(1, name=n, value=v)
+    n = "A Description of"
+    v = "SCP Nine Thirty-One:\nIt is a rice bowl."
+    embed.set_field_at(2, name=n, value=v)
+
+
+def scp_1241(embed: Embed):
+    embed.colour = None
+
+
+def scp_1561(embed: Embed):
+    d = "His Majesty's SCP-MDLXI is currently being worn by King Data the " \
+        "Expunged within the Kingdom of Site Redacted and is to be guarded " \
+        "by at least 10 Knights at all times."
+    embed.set_field_at(1, name="Regal Containment Decree:", value=d)
+
+
+def scp_1798(embed: Embed):
+    embed.colour = Color.gold()
+    embed.set_field_at(0, name="Object Type:", value="Ectoentrophic")
+
+
+def scp_2062(_):
+    return "*Die ganzen Zahlen hat der liebe Gott gemacht, alles andere ist" \
+           "Menschenwerk.*"
+
+
+def scp_2161(embed: Embed):
+    embed.set_field_at(1, name="Special Containment Procedures:",
+                       value="[DATA ERROR]")
+    embed.set_field_at(2, name="Description:",
+                       value="[DATA ERROR]")
+    return "I'm  having  issues  with  this  one...  sorry."
+
+
+def scp_2212(embed: Embed):
+    embed.set_field_at(0, name="Object Class:",
+                       value="[MASSIVE DATABASE CORRUPTION]")
+    embed.set_field_at(1, name="Special Containment Procedures:",
+                       value="[MASSIVE DATABASE CORRUPTION]")
+
+
+def scp_2237(embed: Embed):
+    """This SCP frequently changes between its Euclid and Thaumiel variant."""
+    embed.set_field_at(1, name="Special Containment Procedures:",
+                       value="[DATA ERROR]")
+    embed.set_field_at(2, name="Description:",
+                       value="[DATA ERROR]")
+
+
+def scp_2316(_):
+    return "**``Please repeat the following phrase slowly and clearly into " \
+           "your terminal microphone:``**\n``I do not recognize the bodies " \
+           "in the water.``"
+
+
+def scp_2357(embed: Embed):
+    o = "Obj3ct Class:"
+    v = "SCP-2357 poses no danger to anyone, although it very easily could " \
+        "have been made that way."
+    embed.set_field_at(0, name=o, value=v)
 
 
 def scp_2521(embed: Embed):
     embed.colour = Color.red()
-    return "Are you trying to get me killed?!?"
+    return ":writing_hand: :desktop: :speech_balloon: :no_good:"
 
-
-def scp_2602(embed: Embed):
-    """Did you know this thing used to be a library?"""
-    embed.set_field_at(0, name="Library Class:", value="Former")
-    embed.title = "SCP-2602, which used to be a library"
-
-
-# TODO: Check titles for:
-# 2565
-# 2769 (61231)
-# 2864
-# 2930
-# 3942
 
 def scp_2565(embed: Embed):
     embed.colour = Color.red()
@@ -55,7 +149,22 @@ def scp_2565(embed: Embed):
     embed.set_field_at(0, name="Allison Eckhart Class:", value="Keter")
 
 
-def scp_61231(embed: Embed):
+def scp_2576(_):
+    return "Contained within the image below is a memetic entity that " \
+           "appears to be a multi-colored goat. Properly inoculated " \
+           "individuals should be able to perceive this goat."
+
+
+def scp_2602(embed: Embed):
+    """Did you know this thing used to be a library?"""
+    embed.set_field_at(0, name="Library Class:", value="Former")
+
+
+def scp_2718(embed: Embed):
+    embed.set_field_at(2, name="Description:", value="DAMMERUNG EYES ONLY")
+
+
+def scp_2769(embed: Embed):
     """SCP-2769: It's a really shitty implementation of some infohazard and I
     don't really feel like figuring the thing out. Seriously.
     """
@@ -63,14 +172,33 @@ def scp_61231(embed: Embed):
     url = "".join(["http://scp-wiki.wdfiles.com/local-",
                    "-files/scp-2769/1280px-Cardisoma_armatus-front.jpg"])
     embed.set_image(url=url)
-    embed.title = "SCP-61231"
+
+
+def scp_2851(embed: Embed):
+    embed.colour = Color.red()
+    return "I like this embed's color. Very powerful. Good work."
+
+
+def scp_2839(embed: Embed):
+    embed.set_field_at(0, name="Name:", value="Octavius Weppler")
+    o = "Field researcher, member of Cognitohazardous Research Division, " \
+        "Archivist."
+    embed.set_field_at(1, name="Occupation", value=o)
+    embed.set_field_at(2, name="Security Clearance Level:", value="3")
+    return "If you've ended up on this page by accessing the document for " \
+           "SCP-2839, sorry to tell you but you've ended up here by " \
+           "mistake. We currently have no idea why this keeps happening, " \
+           "probably IT maintenance bull or something like that, but since " \
+           "there is no current item actually designated as SCP-2839, " \
+           "sorting this problem out is currently low-priority. Sorry for " \
+           "the inconvenience.\n\n*- Dr. Weppler*"
 
 
 def scp_2864(embed: Embed):
     embed.description = "Di Molte Voci"
 
 
-def sccp_2930(embed: Embed):
+def scp_2930(embed: Embed):
     """SCP-2930, except with most of the letter c c being repeated LOL"""
     object_class = embed.fields[0].value
     embed.description = "Cross City City City City Hall"
@@ -78,37 +206,19 @@ def sccp_2930(embed: Embed):
     containment = embed.fields[1].value
     embed.set_field_at(1, name="Special Containment Containment Procedures:",
                        value=containment)
-    embed.title = "SCCP-2930"
 
 
-def scp_3942(embed: Embed):
-    embed.description = "UNDEFINED"
-    embed.title = "UNDEFINED"
+def scp_3340(_):
+    return "This page is undergoing deletion."
 
 
-hard_code_specials = {"SCP-2521": scp_2521, "SCP-2602": scp_2602,
-                      "SCP-2565": scp_2565, "SCP-2769": scp_61231,
-                      "SCP-2864": scp_2864, "SCP-2930": sccp_2930,
-                      "SCP-3942": scp_3942}
-
-
-def read_component(thing):
-    if isinstance(thing, Tag):
-        if thing.name == "em":
-            return "*" + read_component(thing.next_element) + "*"
-        elif thing.name == "strong":
-            return "**" + read_component(thing.next_element) + "**"
-        elif thing.name == "u":
-            return "__" + read_component(thing.next_element) + "__"
-        elif thing.attrs.get("style") == "text-decoration: line-through;":
-            return "~~" + read_component(thing.next_element) + "~~"
-        elif thing.attrs.get("id") is not None and "footnoteref" in \
-                thing.attrs["id"]:
-            return ""
-        else:
-            return read_component(thing.next_element)
-    else:
-        return thing
+hard_code_specials = {732: scp_732, 931: scp_931, 1241: scp_1241,
+                      1561: scp_1561, 1798: scp_1798, 2062: scp_2062,
+                      2161: scp_2161, 2212: scp_2212, 2237: scp_2237,
+                      2316: scp_2316, 2357: scp_2357, 2521: scp_2521,
+                      2565: scp_2565, 2576: scp_2576, 2602: scp_2602,
+                      2718: scp_2718, 2769: scp_2769, 2839: scp_2839,
+                      2851: scp_2851, 2864: scp_2864, 2930: scp_2930}
 
 
 def fetch_level(element, limit=1024):
@@ -117,9 +227,10 @@ def fetch_level(element, limit=1024):
     if element is None:
         return "[DATA ERROR]"
     for thing in [element] + list(element.next_siblings):
-        # component = read_component(thing)
         if isinstance(thing, Tag):
-            if thing.name == "em":
+            if thing.name == "br":
+                component = "\n"
+            elif thing.name == "em":
                 component = "*" + fetch_level(thing.next_element) + "*"
             elif thing.name == "strong":
                 component = "**" + fetch_level(thing.next_element) + "**"
@@ -146,97 +257,78 @@ def fetch_level(element, limit=1024):
     return "".join(parts).strip("-:, ")
 
 
-def save_titles():
-    try:
-        if not isdir(folder):
-            mkdir(folder)
-        data = open(join(folder, titles_file), "w")
-        print("The following SCPs may need manual title entries:")
-        for num in titles:
-            if titles[num] is not None:
-                data.write("".join([str(num), "=", titles[num], "\n"]))
-            else:
-                print(str(num))
-        data.flush()
-        data.close()
-        return True
-    except FileExistsError:
-        return False
-
-
-async def get_titles(loop):
-    async with ClientSession(loop=loop) as session:
-        for series in range(series_range):
-            url = "http://scp-wiki.wikidot.com/scp-series"
-            if series > 0:
-                url += "-" + str(series + 1)
-            print(url)
-            async with session.get(url) as req:
-                if req.status == 200:
-                    soup = BeautifulSoup(await req.read(), "html.parser")
-                    for num in range(1000):
-                        num += series * 1000
-                        if num < 10:
-                            number = "00" + str(num)
-                        elif num < 100:
-                            number = "0" + str(num)
-                        else:
-                            number = str(num)
-                        element = soup.find("a", string="SCP-" + number)
-                        if element is not None:
-                            titles[num] = fetch_level(element.next_sibling)
-                else:
-                    return False
-    return save_titles()
-
-
-async def load_titles(loop, force_fetch=False):
-    if not force_fetch:
-        try:
-            data = open(join(folder, titles_file), "r")
-            for line in data:
-                args = line.split("=", 1)
-                titles[int(args[0])] = args[1]
-        except FileNotFoundError or IndexError or ValueError:
-            force_fetch = True
-    if force_fetch:
-        return await get_titles(loop)
-    return True
-
-
-async def parse_scp(ctx, number: str, post_image=False):
-    url = "http://scp-wiki.wikidot.com/scp-" + number
-    message = await ctx.send("Fetching SCP information...")
+async def parse_scp(ctx, number, debug=False):
+    # Gonna fuck with y'all with SCCP-2930 here.
+    if number == 931:
+        message = await ctx.send("Going to fetch your\nSCP information.\n"
+                                 "Got it! Here you go...")
+    elif number == 2930:
+        message = await ctx.send("Fetching SCCP information...")
+    else:
+        message = await ctx.send("Fetching SCP information...")
+    if number < 10:
+        scp_number = "SCP-00{}".format(number)
+    elif number < 100:
+        scp_number = "SCP-0{}".format(number)
+    else:
+        scp_number = "SCP-{}".format(number)
+    url = "http://scp-wiki.wikidot.com/{}".format(scp_number)
+    # Make request for SCP entry page.
     async with ctx.channel.typing(), ClientSession(
             loop=ctx.bot.loop) as session, session.get(url) as req:
         if req.status == 200:
-            embed = Embed(title="SCP-" + number,
-                          description=titles[int(number)],
-                          url=url)
             source = BeautifulSoup(await req.read(), "html.parser")
-
-            # Get the SCP class...
-            object_class = source.find(
-                string=compile("Object (Class[ ]?)+[:]?$")) or source.find(
-                string=compile("Classification[:]?$"))
-            # If you're the person who uses "Classification" f*ck off pls...
+            # Get the title from the accessed page. This is always consistent.
+            title = source.find(id="page-title").next_element.strip()
+            # Get title description either by hard code or searching series.
+            description = descriptions.get(number, None)
+            if description is None and not debug:
+                desc_url = "http://scp-wiki.wikidot.com/scp-series"
+                if number > 999:
+                    desc_url = "{}-{}".format(desc_url, number // 1000 + 1)
+                async with session.get(desc_url) as req2:
+                    if req2.status == 200:
+                        source2 = BeautifulSoup(await req2.read(),
+                                                "html.parser")
+                        element = source2.find("a", string=scp_number)
+                        if element is not None:
+                            description = fetch_level(element.next_sibling)
+                            descriptions[number] = str(description)
+            embed = Embed(title=title, description=description,
+                          url=url.lower())
+            # Get the SCP class.
+            object_class = object_classes.get(number, None)
             if object_class is None:
-                object_class = "[WITHHELD]"
-            elif not object_class.next_element.strip():
-                classes = []
-                for sibling in object_class.next_element.next_siblings:
-                    if sibling is not None:
-                        if isinstance(sibling, Tag) and \
-                                sibling.next_element is not None:
-                            element = sibling.next_element.strip(": ")
-                            classes.append("~~" + element + "~~")
-                        elif sibling.strip():
-                            classes.append(sibling.strip())
-                object_class = " ".join(classes)
-            else:
-                object_class = object_class.next_element.strip(": ")
+                object_class = source.find(
+                    string=compile(
+                        "Object ([Cc]lass[ ]?)+[:]?$"))
+            if object_class is None:
+                # If you're the person who uses "Classification" f*ck off.
+                object_class = source.find(
+                    string=compile("Anomaly [Cc]lass[:]?$")) or source.find(
+                    string=compile("Classification[:]?$")) or source.find(
+                    string=compile("Item ([Cc]lass[ ]?)+[:]?$"))
+            # Hunt down object class from element.
+            try:
+                if not object_class.next_element.strip(": "):  # Added :
+                    classes = []
+                    for sibling in object_class.next_element.next_siblings:
+                        if sibling is not None:
+                            if isinstance(sibling, Tag) and \
+                                    sibling.next_element is not None:
+                                element = sibling.next_element
+                                classes.append("~~" + element + "~~")
+                            elif sibling.strip(": "):  # Added :
+                                classes.append(sibling.strip(": "))  # Added :
+                    object_class = " ".join(classes)
+                else:
+                    object_class = object_class.next_element.strip(": ")
+            except (AttributeError, TypeError):
+                if object_class is None:
+                    object_class = "[WITHHELD]"
+                else:
+                    object_class = "[DATA ERROR]"
             embed.add_field(name="Object Class:", value=object_class)
-
             # Color the embed based on class...
             object_class = object_class.lower()
             if search("safe$", object_class) or search("safe[^~]+",
@@ -254,47 +346,69 @@ async def parse_scp(ctx, number: str, post_image=False):
             elif search("apollyon$", object_class) or search("apollyon[^~]+",
                                                              object_class):
                 embed.colour = Color.red()
-
+            elif debug:
+                print("No proper color attribution for class {}.".format(
+                    object_class))
             # Fetch the containment procedures and description...
-            containment = source.find(
-                string=compile("Special (Containment )+Procedure[s]?[:]?$"))
+            scp1 = compile(
+                "(Special )?([Cc]ontainment )+[Pp]rocedure[s]?[:]?$")
+            scp2 = compile(
+                "(Special )?([Cc]ontainment )+[Pp]rocedure[s]?.*[:]$")
+            # For the one f*cker who writes "Protocols" instead of "Procedures"
+            scp3 = compile("(Special )?([Cc]ontainment )+[Pp]rotocol[s]?[:]?$")
+            containment = source.find(string=scp1)
+            if containment is None:
+                containment = source.find(string=scp2) or source.find(
+                    string=scp3)
             if containment is None or containment.next_element is None:
                 containment = "[DATA ERROR]"
+                if debug:
+                    print("Could not find containment procedures.")
             else:
                 containment = fetch_level(containment.next_element)
                 if search("[.][~*_'\"]*$", containment) is None:
                     containment += "..."
             embed.add_field(name="Special Containment Procedures:",
                             value=containment)
-            description = source.find(string=compile("Description[:]?$"))
+            description = source.find(
+                string=compile("Description[:]?$")) or source.find(
+                string=compile("Description.*[:]$"))
             if description is None or description.next_element is None:
                 description = "[DATA ERROR]"
+                if debug:
+                    print("Could not find description.")
             else:
                 description = fetch_level(description.next_element)
                 if search("[.][~*_'\"]*$", description) is None:
                     description += "..."
             embed.add_field(name="Description:", value=description)
-
             # Locate the image...
             image = source.find("div", compile("scp-image-block"))
-            if post_image and image is not None:
+            if image is not None:
                 image = image.next_element
                 if image is not None and isinstance(image, Tag):
                     image = image.get("src")
                     if image is not None:
                         embed.set_image(url=image)
-
-            # Post-processing embed...
+            # Post-process embed.
             addendum = None
-            process = hard_code_specials.get("SCP-" + number)
+            process = hard_code_specials.get(number)
             if process is not None:
                 addendum = process(embed)
             await ctx.send(addendum, embed=embed)
+        # If no SCP exists with such a number.
         elif req.status == 404:
             await ctx.send(
                 "Such an SCP is either classified or does not exist...")
+            if debug:
+                print("(Doesn't exist.)")
+        # Cover other web errors.
         else:
-            await ctx.send("An error occurred. ({})".format(str(req.status)))
+            await ctx.send(
+                "An error occured. ({})".format(str(req.status)))
+            if debug:
+                print("Hit server error {}.".format(str(req.status)))
+                ctx.flag = True
     await message.delete()
 
 
@@ -306,15 +420,7 @@ class SCPFoundation:
     @commands.cooldown(1, 5, BucketType.user)
     async def scp(self, ctx, number: int):
         """Retrieves information on a particular SCP."""
-        if number <= 0:
-            return
-        elif number < 10:
-            number = "00" + str(number)
-        elif number < 100:
-            number = "0" + str(number)
-        else:
-            number = str(number)
-        await parse_scp(ctx, number, post_image=True)
+        await parse_scp(ctx, number)
 
     @commands.command()
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
@@ -352,7 +458,7 @@ class SCPFoundation:
                         y_cur += h + y_pad
             if append is not None:
                 draw.text((x_start, y_cur), append, fill=(0, 0, 0), font=font)
-
+            # Write image to byte stream and send.
             image_bytes = BytesIO()
             image.save(image_bytes, format="png")
             image_bytes.seek(0)
@@ -361,4 +467,90 @@ class SCPFoundation:
 
 
 def setup(bot):
-    pass
+    bot.add_cog(SCPFoundation(bot))
+
+
+async def get_titles(loop, titles):
+    async with ClientSession(loop=loop) as session:
+        for series in range(4):
+            url = "http://scp-wiki.wikidot.com/scp-series"
+            if series > 0:
+                url += "-" + str(series + 1)
+            print(url)
+            async with session.get(url) as req:
+                if req.status == 200:
+                    soup = BeautifulSoup(await req.read(), "html.parser")
+                    for num in range(1000):
+                        num += series * 1000
+                        if num < 10:
+                            number = "00" + str(num)
+                        elif num < 100:
+                            number = "0" + str(num)
+                        else:
+                            number = str(num)
+                        element = soup.find("a", string="SCP-" + number)
+                        if element is not None:
+                            titles[num] = fetch_level(element.next_sibling)
+    print("The following SCPs may need manual title entries:")
+    for num in titles:
+        if titles[num] is None:
+            print(str(num))
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    loop = asyncio.get_event_loop()
+    test_titles = True
+    if test_titles:
+        titles = {(i + 1): None for i in range(3999)}
+        loop.run_until_complete(get_titles(loop, titles))
+    else:
+        class TestBot:
+            def __init__(self):
+                self.loop = loop
+
+            async def __aenter__(self):
+                pass
+
+            async def __aexit__(self, *_):
+                pass
+
+
+        class TestChannel:
+            def typing(self):
+                return self
+
+            async def __aenter__(self):
+                pass
+
+            async def __aexit__(self, *_):
+                pass
+
+
+        class TestContext:
+            def __init__(self):
+                self.bot = TestBot()
+                self.channel = TestChannel()
+                self.flag = False
+
+            async def send(self, *_, **__):
+                return self
+
+            async def delete(self):
+                pass
+
+            async def __aenter__(self):
+                pass
+
+            async def __aexit__(self, *_):
+                pass
+
+
+        ctx = TestContext()
+
+        for i in range(3000, 4000):
+            print(i)
+            loop.run_until_complete(parse_scp(ctx, i, debug=True))
+            if ctx.flag:
+                break
