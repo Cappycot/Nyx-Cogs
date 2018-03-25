@@ -10,7 +10,7 @@ from re import compile, search
 
 from PIL import Image, ImageDraw, ImageFont
 from aiohttp import ClientSession
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, PageElement, Tag
 from discord import Color, Embed, File
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -309,24 +309,25 @@ async def parse_scp(ctx, number, debug=False):
                     string=compile("Classification[:]?$")) or source.find(
                     string=compile("Item ([Cc]lass[ ]?)+[:]?$"))
             # Hunt down object class from element.
-            try:
-                if not object_class.next_element.strip(": "):  # Added :
-                    classes = []
-                    for sibling in object_class.next_element.next_siblings:
-                        if sibling is not None:
-                            if isinstance(sibling, Tag) and \
-                                    sibling.next_element is not None:
-                                element = sibling.next_element
-                                classes.append("~~" + element + "~~")
-                            elif sibling.strip(": "):  # Added :
-                                classes.append(sibling.strip(": "))  # Added :
-                    object_class = " ".join(classes)
-                else:
-                    object_class = object_class.next_element.strip(": ")
-            except (AttributeError, TypeError):
-                if object_class is None:
-                    object_class = "[WITHHELD]"
-                else:
+            if object_class is None:
+                object_class = "[WITHHELD]"
+            elif isinstance(object_class, PageElement):
+                try:
+                    if not object_class.next_element.strip(": "):  # Added :
+                        classes = []
+                        for sibling in object_class.next_element.next_siblings:
+                            if sibling is not None:
+                                if isinstance(sibling, Tag) and \
+                                        sibling.next_element is not None:
+                                    element = sibling.next_element
+                                    classes.append("~~" + element + "~~")
+                                elif sibling.strip(": "):  # Added :
+                                    classes.append(
+                                        sibling.strip(": "))  # Added :
+                        object_class = " ".join(classes)
+                    else:
+                        object_class = object_class.next_element.strip(": ")
+                except (AttributeError, TypeError):
                     object_class = "[DATA ERROR]"
             embed.add_field(name="Object Class:", value=object_class)
             # Color the embed based on class...
