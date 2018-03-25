@@ -94,10 +94,3 @@ guilds/
 users/
 music/
 nyxtest.py
-
-# PyCharm files:
-dictionaries/
-.idea/
-
-# scp cog files:
-scp/titles.txt
