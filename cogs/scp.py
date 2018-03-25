@@ -22,7 +22,7 @@ folder = "scp"
 c_580 = "(~~Keter~~) Due to a review of current documentation as of January " \
         "5, 2009, this SCP has been reclassified as Euclid."
 c_2718 = "``Catastrophic abort at D09E2AD9: HANDLE_NOT_FOUND``"
-object_classes = {580: c_580, 1254: "~~Neutralized~~ Euclid",
+object_classes = {580: c_580, 1241: "", 1254: "~~Neutralized~~ Euclid",
                   1730: "Neutralized", 1848: "~~Euclid~~ Safe",
                   2062: "Kronecker", 2161: "Euclid",
                   2212: " [MASSIVE DATABASE CORRUPTION]", 2237: "[WITHHELD]",
@@ -82,7 +82,8 @@ Despite ignorance.
 
 
 def scp_1241(embed: Embed):
-    embed.colour = None
+    embed.set_field_at(0, name="Object Class:",
+                       value="Neutralised (formerly Safe)")
 
 
 def scp_1561(embed: Embed):
@@ -98,7 +99,7 @@ def scp_1798(embed: Embed):
 
 
 def scp_2062(_):
-    return "*Die ganzen Zahlen hat der liebe Gott gemacht, alles andere ist" \
+    return "*Die ganzen Zahlen hat der liebe Gott gemacht, alles andere ist " \
            "Menschenwerk.*"
 
 
@@ -132,10 +133,9 @@ def scp_2316(_):
 
 
 def scp_2357(embed: Embed):
-    o = "Obj3ct Class:"
     v = "SCP-2357 poses no danger to anyone, although it very easily could " \
         "have been made that way."
-    embed.set_field_at(0, name=o, value=v)
+    embed.set_field_at(0, name="Obj3ct Class:", value=v)
 
 
 def scp_2521(embed: Embed):
@@ -165,8 +165,8 @@ def scp_2718(embed: Embed):
 
 
 def scp_2769(embed: Embed):
-    """SCP-2769: It's a really shitty implementation of some infohazard and I
-    don't really feel like figuring the thing out. Seriously.
+    """SCP-2769: It's an implementation of some weird infohazard and I don't
+    really feel like figuring the thing out. Seriously.
     """
     embed.description = "An Honest Buck"
     url = "".join(["http://scp-wiki.wdfiles.com/local-",
@@ -195,7 +195,31 @@ def scp_2839(embed: Embed):
 
 
 def scp_2864(embed: Embed):
+    """How about "Di Molte Voci"? Italian for "out of many voices".- Grimes"""
     embed.description = "Di Molte Voci"
+    q = "*Not assigning an object class. It's not going to stay put, and " \
+        "the database search will probably choke on it somehow.*"
+    embed.set_field_at(0, name="Russo Sr.:", value=q)
+    q = "*For the Voci itself, I see no reason a standard lockbox wouldn't " \
+        "work. Should definitely stay at Site-82, since transport risks " \
+        "incidental contamination.*"
+    embed.set_field_at(1, name="Kingham:", value=q)
+    q = "*The central anomaly involves the disruption of certain " \
+        "information, randomizing some pieces and replacing others with " \
+        "whatever discussions went into it.*"
+    embed.set_field_at(2, name="Grimes:", value=q)
+    q = "*Seems to me that it's specifically affecting consensus-based " \
+        "information (like standard anomaly summaries), which is why " \
+        "there's nothing close to a real containment report here — just the " \
+        "stuff that's supposed to stay behind the scenes. Things like " \
+        "titles, protocols, object classes, explicit statements of " \
+        "authority, and a few other identifiers switch around at random " \
+        "too. Not sure why our names are unaffected.*"
+    embed.add_field(name="Kingham:", value=q)
+    q = "*Anyways, I was checking out an antique shop in Sicily (which is " \
+        "to say, I was asking for trouble) when I find an extremely pretty " \
+        "glass mask that looks like it belongs to a jester.*"
+    embed.add_field(name="Strunk:", value=q)
 
 
 def scp_2930(embed: Embed):
@@ -380,7 +404,8 @@ async def parse_scp(ctx, number, debug=False):
                     print("Could not find description.")
             else:
                 description = fetch_level(description.next_element)
-                if search("[.][~*_'\"]*$", description) is None:
+                if search("[.][~*_'\"]*$",
+                          description) is None and description != "[WITHHELD]":
                     description += "..."
             embed.add_field(name="Description:", value=description)
             # Locate the image...
