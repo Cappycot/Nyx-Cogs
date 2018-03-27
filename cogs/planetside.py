@@ -24,7 +24,7 @@ vs_logo = "https://www-cdn.planetside2.com/images/players/global/factions/" \
           "vs_70x70.png"
 thumbnails = {1: vs_logo, 2: nc_logo, 3: tr_logo}
 worlds = {1: "Connery", 10: "Miller", 13: "Cobalt", 17: "Emerald",
-          19: "Jaeger"}
+          19: "Jaeger", 25: "Briggs"}
 head_url = "http://census.daybreakgames.com/{}/get/ps2:v2/character/" \
            "?name.first_lower=".format(service_id)
 tail_url = "&c:resolve=stat_history,online_status,outfit,world"
