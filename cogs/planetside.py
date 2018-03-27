@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 from json import loads
 
-service_id = "s:example"  # Replace with an actual service ID.
+service_id = "s:example"  # TODO: Replace with an actual service ID.
 # URL: https://www.planetside2.com/players/#!/
 # Title: [TAG] Name
 # Description: BR XXX
@@ -35,7 +35,7 @@ class PlanetSide:
         self.bot = bot
 
     @commands.command()
-    @commands.cooldown(9, 60, BucketType.default)
+    @commands.cooldown(1, 3, BucketType.user)
     async def player(self, ctx, player):
         """Look up a player by name.
 
