@@ -3,6 +3,7 @@ from discord import Color, Embed
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from json import loads
+from re import match
 
 service_id = "s:example"  # TODO: Replace with an actual service ID.
 # URL: https://www.planetside2.com/players/#!/
@@ -25,9 +26,10 @@ vs_logo = "https://www-cdn.planetside2.com/images/players/global/factions/" \
 thumbnails = {1: vs_logo, 2: nc_logo, 3: tr_logo}
 worlds = {1: "Connery", 10: "Miller", 13: "Cobalt", 17: "Emerald",
           19: "Jaeger", 25: "Briggs"}
-head_url = "http://census.daybreakgames.com/{}/get/ps2:v2/character/" \
-           "?name.first_lower=".format(service_id)
-tail_url = "&c:resolve=stat_history,online_status,outfit,world"
+head_url = "http://census.daybreakgames.com/{}/get/ps2:v2/".format(service_id)
+
+player_url = "character?name.first_lower="
+player_tail_url = "&c:resolve=stat_history,online_status,outfit,world"
 
 
 class PlanetSide:
@@ -36,13 +38,28 @@ class PlanetSide:
 
     @commands.command()
     @commands.cooldown(1, 3, BucketType.user)
-    async def player(self, ctx, player):
+    async def outfit(self, ctx, outfit):
+        """Look up an outfit by full name.
+
+        To look up by tag use the tag command.
+        """
+        pass
+
+    @commands.command(rest_is_raw=True)
+    @commands.cooldown(1, 3, BucketType.user)
+    async def player(self, ctx, *, player):
         """Look up a player by name.
 
         No outfit tags.
         """
+        player = player.strip()
+        # All PS2 characters only have alphanumeric names.
+        if match("^[0-9A-Za-z]*$", player) is None:
+            await ctx.send("Please type a valid character name.")
+            return
         message = await ctx.send("Looking up player {}...".format(player))
-        url = "{}{}{}".format(head_url, player.lower(), tail_url)
+        url = "{}{}{}{}".format(head_url, player_url, player.lower(),
+                                player_tail_url)
         async with ctx.channel.typing(), ClientSession(
                 loop=ctx.bot.loop) as session, session.get(url) as req:
             if req.status == 200:
@@ -56,8 +73,8 @@ class PlanetSide:
                 f_id = int(character["faction_id"])
                 link = "https://www.planetside2.com/players/#!/{}".format(
                     character["character_id"])
-                online = "Online" if character[
-                                         "online_status"] == "1" else "Offline"
+                online = "Offline" if character[
+                                          "online_status"] == "0" else "Online"
                 outfit = None
                 tag = ""
                 w_id = int(character["world_id"])
@@ -87,6 +104,15 @@ class PlanetSide:
                 await ctx.send(
                     "An error occured. ({})".format(str(req.status)))
         await message.delete()
+
+    @commands.command()
+    @commands.cooldown(1, 3, BucketType.user)
+    async def tag(self, ctx, outfit):
+        """Look up an outfit by its tag.
+
+        To look up by name use the outfit command.
+        """
+        pass
 
 
 def setup(bot):
