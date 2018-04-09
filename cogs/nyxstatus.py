@@ -17,7 +17,7 @@ gray = ["gray", "grey", "off", "offline"]
 # 2: Listening
 # 3: Watching
 
-class NyxStatus:
+class Presence:
     def __init__(self, nyx):
         self.nyx = nyx
         self.status = Status.online
@@ -113,6 +113,6 @@ class NyxStatus:
 
 
 def setup(nyx):
-    ns = NyxStatus(nyx)
+    ns = Presence(nyx)
     nyx.add_cog(ns)
     nyx.add_listener(ns.on_ready)
