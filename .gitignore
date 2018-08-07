@@ -42,7 +42,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -87,6 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Discord
+cogs/
 
 # Nyx Data
 *.nyx

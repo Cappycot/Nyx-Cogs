@@ -1,7 +1,7 @@
 from re import match as rematch
 
 import nyx.nyxcommands as nyxcommands
-from discord import CategoryChannel, Embed, TextChannel
+from discord import CategoryChannel, Embed, Member, TextChannel
 from discord.ext import commands
 from discord.utils import get
 from nyx.nyxutils import reply
@@ -39,6 +39,7 @@ class Diagnostics:
             if result is None:
                 result = get(bot.emojis, id=emoji_id)
 
+        # We should hotlink at least the ID and URL of all emojis.
         if result is not None:
             emoji_guild = result.guild
             emoji_id = result.id
@@ -62,10 +63,11 @@ class Diagnostics:
     @commands.command()
     @commands.guild_only()
     @nyxcommands.has_privilege_or_permissions(privilege=-1, manage_guild=True)
-    async def permissions(self, ctx):
+    async def permissions(self, ctx, member: Member = None):
         """Runs permission diagnostics on the guild this command is called in.
         """
-        member = ctx.guild.get_member(self.nyx.user.id)
+        if member is None:
+            member = ctx.guild.get_member(self.nyx.user.id)
         message_block = ["```Markdown", "\n", ctx.guild.name, "\n",
                          "=" * (len(ctx.guild.name))]
         # Length of beginning and end of code block, plus two newlines, plus
@@ -190,6 +192,17 @@ class Diagnostics:
             message_length += len(channel_block)
         message_block.append("```")
         await ctx.author.send("".join(message_block))
+
+    @commands.command()
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, limit: int):
+        check = lambda a: a.id != ctx.message.id
+        deleted = await ctx.channel.purge(limit=limit + 1, check=check)
+        deleted = len(deleted)
+        res = "Deleted {} message{}.".format(deleted,
+                                             "" if deleted == 1 else "s")
+        await ctx.send(res)
 
 
 def setup(nyx):

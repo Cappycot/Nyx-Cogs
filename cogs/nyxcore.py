@@ -54,7 +54,7 @@ class Core:
         output = await self.nyx.loadstring(code, ctx)
         if not output:
             output = "empty"
-        output = "```" + output + "```"
+        output = "```\n" + output + "```"
         await reply(ctx, output)
 
     @commands.command(rest_is_raw=True)

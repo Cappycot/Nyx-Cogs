@@ -16,7 +16,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 # Name of the directory to be used to store things...
-folder = "scp"
+folder = join("data", "scp")
 # Hard-coded object classes for SCPs that have their object classes in images.
 # e.g. some of djkaktus' more prominent SCPs have special header images.
 c_580 = "(~~Keter~~) Due to a review of current documentation as of January " \
@@ -33,15 +33,19 @@ object_classes = {580: c_580, 1241: "", 1254: "~~Neutralized~~ Euclid",
                   3935: "Euclid"}
 # Description titles are cached, but may require resetting from time to time.
 # These SCPs need embed descriptions manually entered at the moment:
+# 2235
 # 2565
 # 2769
 # 2864
 # 2930
+# 3352 redirects to 3353 which may or may not be intentional?
+# 3570
 # 3942
-hard_code_descriptions = {2565: "Allison Eckhart", 2769: "An Honest Buck",
+hard_code_descriptions = {2235: "The Ozymandias Effect",
+                          2565: "Allison Eckhart", 2769: "An Honest Buck",
                           2864: "Di Molte Voci",
                           2930: "Cross City City City City Hall",
-                          3942: "``UNDEFINED``"}
+                          3570: "Umbral Ultimatum", 3942: "``UNDEFINED``"}
 # Make command that cleans description cache maybe?
 descriptions = hard_code_descriptions.copy()
 

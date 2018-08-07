@@ -9,8 +9,6 @@ from re import findall, match, search
 
 from discord.ext import commands
 
-from nyx.nyxutils import respond
-
 ram_constant = log(pi) / 2
 decimal_past = 9999999999999999  # 16 9s, I guess...
 estimate_past = 10000
@@ -97,6 +95,13 @@ def locate_numbers(string):
                 results.append([prefix, int(result)])
     # print(results)
     return results
+
+
+async def respond(ctx, content):
+    if ctx.message.guild is None:
+        return await ctx.send(content)
+    else:
+        return await ctx.send("{}, {}".format(ctx.author.mention, content))
 
 
 async def on_message(message):

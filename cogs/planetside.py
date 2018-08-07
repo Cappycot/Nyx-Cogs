@@ -5,7 +5,7 @@ from discord.ext.commands import BucketType
 from json import loads
 from re import match
 
-service_id = "s:example"  # TODO: Replace with an actual service ID.
+service_id = "s:example"  # Replace with an actual service ID.
 # URL: https://www.planetside2.com/players/#!/
 # Title: [TAG] Name
 # Description: BR XXX
@@ -66,6 +66,12 @@ class PlanetSide:
                 result = loads((await req.read()).decode("utf-8"))
                 if result["returned"] == 0:
                     await ctx.send("Could not find player {}.".format(player))
+                    await message.delete()
+                    return
+                elif result["returned"] > 1:
+                    await ctx.send(
+                        "Returned multiple results for player {}.".format(
+                            player))
                     await message.delete()
                     return
                 character = result["character_list"][0]

@@ -9,15 +9,30 @@ import aiohttp
 from PIL import Image, ImageDraw, ImageFont
 from discord import File
 from discord.ext import commands
-from discord.ext.commands import BucketType
+from discord.ext.commands import BadArgument, BucketType, MemberConverter
 
-from nyx.nyxutils import get_member, respond
-
-templates_folder = "pillow"
+templates_folder = join("data", "pillow")
 
 
 def get_asset(file_name):
     return join(templates_folder, file_name)
+
+
+member_converter = MemberConverter()
+
+
+async def get_member(ctx, query):
+    try:
+        return await member_converter.convert(ctx, query)
+    except BadArgument:
+        return None
+
+
+async def respond(ctx, content):
+    if ctx.message.guild is None:
+        return await ctx.send(content)
+    else:
+        return await ctx.send("{}, {}".format(ctx.author.mention, content))
 
 
 class PILArt:
@@ -25,13 +40,14 @@ class PILArt:
         self.nyx = nyx
         self.captcha_file = "CAPTCHA.png"
 
-    @commands.command()
+    @commands.command(rest_is_raw=True)
     @commands.bot_has_permissions(send_messages=True, attach_files=True,
                                   read_message_history=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def captcha(self, ctx, *words):
+    async def captcha(self, ctx, *, words):
         """Creates a "select all squares" CAPTCHA using the given words."""
         url = None
+        words = words.split()
         async with ctx.channel.typing():
             async for message in ctx.channel.history():
                 for attachment in message.attachments:
@@ -108,10 +124,10 @@ class PILArt:
                 else:
                     await respond(ctx, "Image loading failed! :<")
 
-    @commands.command()
+    @commands.command(rest_is_raw=True)
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def fear(self, ctx, user: str = None):
+    async def fear(self, ctx, *, user=None):
         """For when you fear someone or yourself..."""
         tofear = ctx.message.author
         if user is not None:
@@ -159,15 +175,17 @@ class PILArt:
             else:
                 await respond(ctx, "Image loading failed! :<")
 
-    @commands.command()
+    @commands.command(rest_is_raw=True)
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def flirt(self, ctx, *words):
+    async def flirt(self, ctx, *, words):
         """Type in the pickup line of your choice here..."""
-        if not " ".join(words):
+        words = words.strip()
+        if words:
             await respond(ctx, "You didn't type in a pickup line...")
             ctx.command.reset_cooldown(ctx)
             return
+        words = words.split()
 
         async with ctx.channel.typing():
             flirtfont = ImageFont.truetype(get_asset("animeace2_reg.ttf"), 16)
@@ -207,11 +225,11 @@ class PILArt:
             await ctx.send(msg, file=File(image_bytes, filename="Flirt.png"))
             image_bytes.close()
 
-    @commands.command(aliases=["destroy"])
+    @commands.command(aliases=["destroy"], rest_is_raw=True)
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
     @commands.guild_only()
-    async def obliterate(self, ctx, victim: str):
+    async def obliterate(self, ctx, *, victim):
         """For when you really hate someone..."""
         victim = await get_member(ctx, victim)
         if victim is None:
