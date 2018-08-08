@@ -34,9 +34,6 @@ class Habitica:
         self.headers = {"x-api-user": config.get("Settings", "uid"),
                         "x-api-key": config.get("Settings", "token")}
         self.chats = {}  # {gid:ChatTracker}
-        ct = ChatTracker("Tavern")
-        ct.channels = {317903539500351488: True}
-        self.chats["habitrpg"] = ct
 
     async def get_chats(self, gid):
         data = None
@@ -49,7 +46,10 @@ class Habitica:
 
     @commands.command()
     async def addchat(self, ctx, gid):
-        pass  # Need to run get to get group information as needed.
+        gid = gid.lower()
+        # Need to run get to get group information as needed.
+        if gid == "tavern":
+            gid = "habitrpg"
 
     async def clock(self):
         await self.bot.wait_until_ready()
@@ -114,4 +114,4 @@ class Habitica:
 def setup(bot):
     habitica = Habitica(bot)
     bot.add_cog(habitica)
-    #bot.loop.create_task(habitica.clock())
+    bot.loop.create_task(habitica.clock())
