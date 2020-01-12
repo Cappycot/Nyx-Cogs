@@ -531,7 +531,7 @@ if __name__ == "__main__":
     import asyncio
 
     loop = asyncio.get_event_loop()
-    test_titles = True
+    test_titles = False
     if test_titles:
         titles = {(i + 1): None for i in range(3999)}
         loop.run_until_complete(get_titles(loop, titles))
@@ -579,7 +579,7 @@ if __name__ == "__main__":
 
         ctx = TestContext()
 
-        for i in range(3000, 4000):
+        for i in range(2000, 3000):
             print(i)
             loop.run_until_complete(parse_scp(ctx, i, debug=True))
             if ctx.flag:
