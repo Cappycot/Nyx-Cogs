@@ -91,9 +91,6 @@ ENV/
 #PyCharm
 .idea/
 
-# Discord
-cogs/
-
 # Nyx Data
 *.nyx
 guilds/

@@ -4,50 +4,34 @@ This module requires PIL 4.X.X to run!
 
 from io import BytesIO
 from os.path import join
+from random import random
 
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
 from discord import File
 from discord.ext import commands
-from discord.ext.commands import BadArgument, BucketType, MemberConverter
+from discord.ext.commands import Cog, BucketType
+from nyxutils import get_member, respond
 
-templates_folder = join("data", "pillow")
+templates_folder = "pillow"
 
 
 def get_asset(file_name):
     return join(templates_folder, file_name)
 
 
-member_converter = MemberConverter()
-
-
-async def get_member(ctx, query):
-    try:
-        return await member_converter.convert(ctx, query)
-    except BadArgument:
-        return None
-
-
-async def respond(ctx, content):
-    if ctx.message.guild is None:
-        return await ctx.send(content)
-    else:
-        return await ctx.send("{}, {}".format(ctx.author.mention, content))
-
-
-class PILArt:
+class PILArt(Cog):
     def __init__(self, nyx):
         self.nyx = nyx
         self.captcha_file = "CAPTCHA.png"
 
-    @commands.command(rest_is_raw=True)
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, attach_files=True,
                                   read_message_history=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def captcha(self, ctx, *, words):
+    async def captcha(self, ctx, *words):
         """Creates a "select all squares" CAPTCHA using the given words."""
         url = None
-        words = words.split()
         async with ctx.channel.typing():
             async for message in ctx.channel.history():
                 for attachment in message.attachments:
@@ -60,8 +44,6 @@ class PILArt:
                     break
             if url is None:
                 await respond(ctx, "I couldn't find an image to use...")
-                ctx.command.reset_cooldown(ctx)
-                return
             async with aiohttp.ClientSession(
                     loop=self.nyx.loop) as session, session.get(url) as req:
                 if req.status == 200:
@@ -124,10 +106,10 @@ class PILArt:
                 else:
                     await respond(ctx, "Image loading failed! :<")
 
-    @commands.command(rest_is_raw=True)
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def fear(self, ctx, *, user=None):
+    async def fear(self, ctx, user: str = None):
         """For when you fear someone or yourself..."""
         tofear = ctx.message.author
         if user is not None:
@@ -136,9 +118,7 @@ class PILArt:
                 await respond(ctx, "I don't know who you are talking about...")
                 ctx.command.reset_cooldown(ctx)
                 return
-        url = tofear.avatar_url
-        if not url:
-            url = tofear.default_avatar_url
+        url = str(tofear.avatar_url)
 
         # Make http request for profile picture and get background
         async with ctx.channel.typing(), aiohttp.ClientSession(
@@ -175,17 +155,15 @@ class PILArt:
             else:
                 await respond(ctx, "Image loading failed! :<")
 
-    @commands.command(rest_is_raw=True)
+    @commands.command()
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
-    async def flirt(self, ctx, *, words):
+    async def flirt(self, ctx, *words):
         """Type in the pickup line of your choice here..."""
-        words = words.strip()
-        if words:
+        if not " ".join(words):
             await respond(ctx, "You didn't type in a pickup line...")
             ctx.command.reset_cooldown(ctx)
             return
-        words = words.split()
 
         async with ctx.channel.typing():
             flirtfont = ImageFont.truetype(get_asset("animeace2_reg.ttf"), 16)
@@ -225,34 +203,32 @@ class PILArt:
             await ctx.send(msg, file=File(image_bytes, filename="Flirt.png"))
             image_bytes.close()
 
-    @commands.command(aliases=["destroy"], rest_is_raw=True)
+    @commands.command(aliases=["destroy"])
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(1, 5, BucketType.user)
     @commands.guild_only()
-    async def obliterate(self, ctx, *, victim):
+    async def obliterate(self, ctx, victim: str):
         """For when you really hate someone..."""
         victim = await get_member(ctx, victim)
         if victim is None:
-            await respond(ctx, "We couldn't get a target, sir!")
+            await respond(ctx, "I couldn't get a target!")
             ctx.command.reset_cooldown(ctx)
         elif victim == self.nyx.user:
-            await respond(ctx, "I'm your gunner... moron.")
+            await respond(ctx, "I'm your gun... baka.")
             ctx.command.reset_cooldown(ctx)
         elif victim == ctx.message.author:
             await respond(ctx, "What? Do you have crippling depression?")
             ctx.command.reset_cooldown(ctx)
         else:
+            a10 = random() < 0.42
+            image_file = "Obliterate2.png" if a10 else "Obliterate.png"
             shooter = ctx.message.author
             # Get urls for profile pics
-            url2 = victim.avatar_url
-            if not url2:
-                url2 = victim.default_avatar_url
-            url1 = shooter.avatar_url
-            if not url1:
-                url1 = shooter.default_avatar_url
+            url1 = str(shooter.avatar_url)
+            url2 = str(victim.avatar_url)
             # Presets for image creation
-            avatarside = 80
-            spos = (130, 42)
+            avatarside = 64 if a10 else 80
+            spos = (270, 57) if a10 else (130, 42)
             vpos = (260, 360)
 
             # Make http request for profile pictures and get background tank
@@ -266,7 +242,7 @@ class PILArt:
                         shooter = Image.open(image_bytes).convert("RGBA")
                         image_bytes = BytesIO(await req2.read())
                         victim = Image.open(image_bytes)
-                        backdrop = Image.open(get_asset("Obliterate.png"))
+                        backdrop = Image.open(get_asset(image_file))
 
                         # Paste shooter on top of tank as resized image
                         shooter = shooter.resize(
