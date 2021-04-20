@@ -442,7 +442,7 @@ async def parse_scp(ctx, number, debug=False):
     await message.delete()
 
 
-class SCPFoundation:
+class SCPFoundation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

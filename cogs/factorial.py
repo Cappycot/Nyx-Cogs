@@ -8,6 +8,8 @@ from math import ceil, factorial, floor, log, pi
 from re import findall, match, search
 
 from discord.ext import commands
+from discord.ext.commands import Cog
+from nyxbot.nyxutils import respond
 
 ram_constant = log(pi) / 2
 decimal_past = 9999999999999999  # 16 9s, I guess...
@@ -97,13 +99,6 @@ def locate_numbers(string):
     return results
 
 
-async def respond(ctx, content):
-    if ctx.message.guild is None:
-        return await ctx.send(content)
-    else:
-        return await ctx.send("{}, {}".format(ctx.author.mention, content))
-
-
 async def on_message(message):
     if message.author.bot:
         return
@@ -127,13 +122,16 @@ async def on_message(message):
         await message.channel.send(oh_no)
 
 
-class Factorial:
+class Factorial(Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
     async def factorial(self, ctx, number: int):
-        """Calculates the factorial of a given number."""
+        """Calculates the factorial of a given number.
+
+        Alternatively, just type a number with an exclamation mark!
+        """
         # TODO: Write out the respond code here so this cog doesn't need nyx.
         await respond(ctx, "".join([str(number), get_factorial(["", number])]))
 

@@ -1,9 +1,13 @@
 from asyncio import sleep
+from contextlib import closing, redirect_stdout
+from io import StringIO
+from sys import exc_info
 
-import nyx.nyxcommands as nyxcommands
 from discord.ext import commands
 from discord.ext.commands.view import StringView
-from nyx.nyxutils import reply
+
+import nyxbot.nyxcommands as nyxcommands
+from nyxbot.nyxutils import reply
 
 green = ["g", "green", "online"]
 yellow = ["idle", "y", "yellow"]
@@ -11,11 +15,12 @@ red = ["busy", "r", "red"]
 gray = ["gray", "grey", "off", "offline"]
 
 
-class Core:
+class Core(commands.Cog):
     def __init__(self, nyx):
         self.nyx = nyx
 
-    @commands.command(name="privilege", aliases=["rank"], pass_context=True)
+    @commands.command(name="privilege", aliases=["rank"], hidden=True,
+                      pass_context=True)
     async def check_privilege(self, ctx):
         """Displays your privilege rank."""
         if await self.nyx.is_owner(ctx.message.author):
@@ -51,9 +56,16 @@ class Core:
             code = code[3:]
         if code.endswith("```"):
             code = code[:-3]
-        output = await self.nyx.loadstring(code, ctx)
-        if not output:
-            output = "empty"
+        del py_start, python_start, view
+        with closing(StringIO()) as log:
+            with redirect_stdout(log):
+                try:
+                    exec(code)
+                except Exception:
+                    error = exc_info()
+                    for e in error:
+                        print(e)
+            output = log.getvalue()
         output = "```\n" + output + "```"
         await reply(ctx, output)
 
@@ -78,7 +90,7 @@ class Core:
         try:
             self.nyx.load_extension(extension)
             await ctx.send("Attempted to load {}.".format(extension))
-        except:  # I can use "bare except" all I want >:<
+        except Exception:  # I can use "bare except" all I want >:<
             await ctx.send("Failed to load {}.".format(extension))
 
     @commands.command()
@@ -87,7 +99,7 @@ class Core:
         try:
             self.nyx.reload_extension(extension)
             await ctx.send("Attempted to reload {}.".format(extension))
-        except:
+        except Exception:
             await ctx.send("Failed to reload {}.".format(extension))
 
     @commands.command()
@@ -96,7 +108,7 @@ class Core:
         try:
             self.nyx.unload_extension(extension)
             await ctx.send("Attempted to unload {}.".format(extension))
-        except:
+        except Exception:
             await ctx.send("Failed to unload {}.".format(extension))
 
     @commands.command()
@@ -105,7 +117,7 @@ class Core:
         """Dun kill me pls..."""
         await ctx.send("Light cannot be without dark!!!")
         await sleep(1)
-        await self.nyx.logout()
+        await self.nyx.close()
 
 
 def setup(nyx):

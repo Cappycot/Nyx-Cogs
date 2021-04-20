@@ -28,7 +28,7 @@ class ChatTracker:
         self.last_chat = None
 
 
-class Habitica:
+class Habitica(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         config.read(join(folder, "auth.nyx"))

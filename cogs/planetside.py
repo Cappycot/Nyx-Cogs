@@ -32,7 +32,7 @@ player_url = "character?name.first_lower="
 player_tail_url = "&c:resolve=stat_history,online_status,outfit,world"
 
 
-class PlanetSide:
+class PlanetSide(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

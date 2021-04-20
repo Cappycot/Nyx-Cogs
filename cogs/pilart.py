@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from discord import File
 from discord.ext import commands
 from discord.ext.commands import Cog, BucketType
-from nyxutils import get_member, respond
+from nyxbot.nyxutils import get_member, respond
 
 templates_folder = "pillow"
 
@@ -30,7 +30,7 @@ class PILArt(Cog):
                                   read_message_history=True)
     @commands.cooldown(1, 5, BucketType.user)
     async def captcha(self, ctx, *words):
-        """Creates a "select all squares" CAPTCHA using the given words."""
+        """Creates a "select all squares" CAPTCHA using the given words on the last image."""
         url = None
         async with ctx.channel.typing():
             async for message in ctx.channel.history():
@@ -220,7 +220,7 @@ class PILArt(Cog):
             await respond(ctx, "What? Do you have crippling depression?")
             ctx.command.reset_cooldown(ctx)
         else:
-            a10 = random() < 0.42
+            a10 = random() < 0.5
             image_file = "Obliterate2.png" if a10 else "Obliterate.png"
             shooter = ctx.message.author
             # Get urls for profile pics

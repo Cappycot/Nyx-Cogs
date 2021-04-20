@@ -1,10 +1,9 @@
+import nyxbot.nyxcommands as nyxcommands
 from discord import Activity, ActivityType, Status
 from discord.enums import try_enum
 from discord.ext import commands
-
-import nyx.nyxcommands as nyxcommands
-from nyx.nyxcommands import ModuleExclusiveCommand
-from nyx.nyxutils import respond
+# from nyxbot.nyxcommands import ModuleExclusiveCommand
+from nyxbot.nyxutils import respond
 
 green = ["g", "green", "online"]
 yellow = ["idle", "y", "yellow"]
@@ -17,7 +16,11 @@ gray = ["gray", "grey", "off", "offline"]
 # 2: Listening
 # 3: Watching
 
-class Presence:
+class ModuleExclusiveCommand(commands.Command):
+    pass
+
+
+class Presence(commands.Cog):
     def __init__(self, nyx):
         self.nyx = nyx
         self.status = Status.online

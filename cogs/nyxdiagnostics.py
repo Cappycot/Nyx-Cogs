@@ -1,13 +1,13 @@
 from re import match as rematch
 
-import nyx.nyxcommands as nyxcommands
+import nyxbot.nyxcommands as nyxcommands
 from discord import CategoryChannel, Embed, Member, TextChannel
 from discord.ext import commands
 from discord.utils import get
-from nyx.nyxutils import reply
+from nyxbot.nyxutils import reply
 
 
-class Diagnostics:
+class Diagnostics(commands.Cog):
     def __init__(self, nyx):
         self.nyx = nyx
 
@@ -76,7 +76,7 @@ class Diagnostics:
         perms = member.guild_permissions
         # List Roles
         index = len(member.roles) - 1
-        for role in ctx.guild.role_hierarchy[:-1]:
+        for role in reversed(ctx.guild.roles[1:]):
             role_name = str(role)
             if index > 0 and member.roles[index] == role:
                 role_name = "\n**{}**".format(role_name)
